@@ -7,6 +7,7 @@ const mongoose = require('mongoose'); //Imports Mongoose library
 require('dotenv').config(); //Get environment variables from the .env file
 
 const AuthRoutes = require('./routes/auth.route');
+const ReviewRoutes = require('./routes/review.route');
 
 const init = async () => {
 
@@ -34,6 +35,7 @@ const init = async () => {
 
     //Routes
     server.route(AuthRoutes);
+    server.route(ReviewRoutes);
 
     //starting server
     await server.start();

@@ -6,16 +6,16 @@ const jwt = require('jsonwebtoken');
 
 //register a new user
 exports.register = async (request, h) => {
-    const { email, password } = request.payload;
+    const { username, email, password } = request.payload;
 
     try {
 
         const existingUser = await User.findOne({email});
 
         if (existingUser) {
-            return h.response({message: 'Usernamne allready exists'}).code(400);
+            return h.response({message: 'Email already in use'}).code(400);
         } else {
-            const newUser = new User ({email, password});
+            const newUser = new User ({username, email, password});
             await newUser.save();
 
             return h.response({ message: 'User created!' }).code(201);
@@ -32,19 +32,21 @@ exports.login = async (request, h) => {
     const { email, password } = request.payload;
 
     try {
-
+        //get user
         const user = await User.findOne({email});
         const matchedPassword= await user.comparePassword(password);
 
         if (!user|| !matchedPassword) {
-            return h.response({message: 'Wrong username or password'}).code(401);
+            return h.response({message: 'Wrong email or password'}).code(401);
         } else {
-            const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
+            //create JWT
+            const token = jwt.sign({ id: user._id, email: user.email, username: user.username }, 
+                process.env.JWT_SECRET, {
                 expiresIn: '1h'// jwt token valid for one hour
             });
     
             return h.response({ 
-                user: { email: user.email },  //return email and token
+                user: { email: user.email, username: user.username },  //return email, username and token
                 token 
             }).code(200);
         }
