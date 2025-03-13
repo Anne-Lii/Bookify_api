@@ -11,5 +11,8 @@ module.exports = [
     {method: 'POST', path: '/login', handler: AuthController.login},
 
     //endpoint to validate token
-    { method: 'GET', path: '/validate', handler: AuthController.validateToken }
+    { method: 'GET', path: '/validate', handler: AuthController.validateToken },
+
+    //endpoint to delete your own account
+    {method: 'DELETE', path: '/users/{id}', handler: AuthController.deleteUser, options:{ auth: 'jwt'}}
 ];

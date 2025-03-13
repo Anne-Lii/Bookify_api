@@ -2,6 +2,7 @@
 
 const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
+const Boom = require('@hapi/boom');
 
 
 //register a new user
@@ -32,29 +33,68 @@ exports.login = async (request, h) => {
     const { email, password } = request.payload;
 
     try {
-        //get user
-        const user = await User.findOne({email});
-        const matchedPassword= await user.comparePassword(password);
-
-        if (!user|| !matchedPassword) {
-            return h.response({message: 'Wrong email or password'}).code(401);
-        } else {
-            //create JWT
-            const token = jwt.sign({ id: user._id, email: user.email, username: user.username }, 
-                process.env.JWT_SECRET, {
-                expiresIn: '1h'// jwt token valid for one hour
-            });
-    
-            return h.response({ 
-                user: { email: user.email, username: user.username },  //return email, username and token
-                token 
-            }).code(200);
+        //get user from database
+        const user = await User.findOne({ email });
+        if (!user) {
+            return h.response({ message: 'Wrong e-mail or password' }).code(401);
         }
-        
+
+        //compare input password with database
+        const matchedPassword = await user.comparePassword(password);
+        if (!matchedPassword) {
+            return h.response({ message: 'Wrong e-mail or password' }).code(401);
+        }
+
+        //create JWT
+        const token = jwt.sign(
+            { id: user._id, email: user.email, username: user.username }, 
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' } //token valid for one hour
+        );
+
+        //log expiration time
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("Token expiration:", new Date(decoded.exp * 1000));
+
+        return h.response({ 
+            user: { email: user.email, username: user.username }, 
+            token 
+        }).code(200);
+
     } catch (error) {
         return h.response({ message: error.message }).code(500);
     }
 };
+
+
+//Delete user - only authorized user can delete its own account
+exports.deleteUser = async (request, h) => {
+    try {
+        //Get user ID from JWT
+        const userIdFromToken = request.auth.credentials.id; 
+        
+        //Get ID from request params
+        const { id } = request.params;
+
+        //Check if user trying to delete his own account (matching ID)
+        if (userIdFromToken !== id) {
+            return Boom.forbidden('You don´t have the authority to delete this account');
+        }
+
+        //Delete user from database
+        const deletedUser = await User.findByIdAndDelete(id);
+
+        if (!deletedUser) {
+            return Boom.notFound('User could not be found.');
+        }
+
+        return h.response({ message: 'Account deleted' }).code(200);
+    } catch (error) {
+        console.error(error);
+        return Boom.badImplementation('Error accured trying to remove account.');
+    }
+};
+
 
 //validate token
 exports.validateToken = (request, h) => {

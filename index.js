@@ -3,7 +3,7 @@
 //includes
 const Hapi = require('@hapi/hapi'); //require hapi
 const mongoose = require('mongoose'); //Imports Mongoose library 
-
+const Jwt = require('@hapi/jwt')//JWT auth
 require('dotenv').config(); //Get environment variables from the .env file
 
 const AuthRoutes = require('./routes/auth.route');
@@ -24,6 +24,24 @@ const init = async () => {
         },
         
     });
+
+    //register JWT plugin
+    await server.register(Jwt);
+
+    //define JWT-auth
+    server.auth.strategy('jwt', 'jwt', {
+        keys: process.env.JWT_SECRET, 
+        verify: { 
+            aud: false, 
+            iss: false, 
+            sub: false,
+            maxAgeSec: 3600 
+        },
+        validate: (artifacts, request, h) => {
+            return { isValid: true, credentials: { id: artifacts.decoded.payload.id } };
+        }
+    });
+
 
     //Connect to MongoDB database
     mongoose.connect(process.env.MONGO_URI)
