@@ -33,9 +33,11 @@ exports.createReview = async (request, h) => {
 exports.getReviewsByBook = async (request, h) => {
     try {
         const { bookId } = request.params;
-        const reviews = await Review.find({ bookId }).populate('userId', 'username');
-
-        console.log("Fetched reviews:", reviews);//DEBUG!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        const reviews = await Review.find({ bookId }).populate({
+            path: 'userId',
+            select: 'username',
+        });
+        
 
         if (reviews.length === 0) {
             return h.response({ message: "No reviews found for this book" }).code(404);
