@@ -52,21 +52,19 @@ exports.getReviewsByBook = async (request, h) => {
 // GET all reviews from a user
 exports.getReviewsByUser = async (request, h) => {
     try {
-        const token = request.headers.authorization.split(' ')[1];
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decodedToken.id;
-
-        const reviews = await Review.find({ userId });
-
-        if (reviews.length === 0) {
-            return h.response({ message: "No reviews found for this user" }).code(404);
-        }
-
-        return h.response(reviews).code(200);
+      const userId = request.auth.credentials.id; // enklare & säkrare
+  
+      const reviews = await Review.find({ userId });
+  
+      if (reviews.length === 0) {
+        return h.response({ message: "No reviews found for this user" }).code(404);
+      }
+  
+      return h.response(reviews).code(200);
     } catch (error) {
-        return h.response({ message: error.message }).code(500);
+      return h.response({ message: error.message }).code(500);
     }
-};
+  };
 
 
 //Update a review
