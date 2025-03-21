@@ -75,7 +75,11 @@ exports.updateReview = async (request, h) => {
         const { reviewId } = request.params;
         const { reviewText, rating } = request.payload;
 
-        const updatedReview = await Review.findByIdAndUpdate(reviewId, { reviewText, rating }, { new: true });
+        const updatedReview = await Review.findByIdAndUpdate(
+            reviewId,
+            { reviewText, rating, updatedAt: new Date() },
+            { new: true }
+          );
 
         if (!updatedReview) {
             return h.response({ message: "Review not found" }).code(404);
